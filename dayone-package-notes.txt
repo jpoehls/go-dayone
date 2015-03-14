@@ -1,0 +1,43 @@
+# Goals
+
+Give directory path to DayOne's data folder.
+E.g. ~/Dropbox/Apps/Day One/Journal.dayone
+
+Function to walk entries.
+
+Function to add an entry.
+
+Function to get photo for entry.
+
+Function to add photo to entry.
+
+
+# API
+
+type Entry struct {
+	
+}
+
+type Journal struct {
+	
+}
+
+func NewJournal(dir string) {
+	
+}
+
+var StopWalk = errors.New("stop walking")
+
+type WalkFunc func(path string, e Entry, err error) error
+
+func (j Journal) Walk(fn WalkFunc) error {
+	// iterate entry files
+	// read one at a time and pass
+	// to visitor function along with
+	// any error reading the file
+	//
+	// if fn returns StopWalk, stop walking
+	//
+	// if fn returns error, stop walking
+	// and return that error
+}
