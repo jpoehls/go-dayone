@@ -5,9 +5,11 @@ import (
 	"github.com/DHowett/go-plist"
 	"github.com/twinj/uuid"
 	"io"
+	"strings"
 	"time"
 )
 
+// Entry is the top-level journal entry type.
 type Entry struct {
 	uuid      string
 	EntryText string
@@ -16,16 +18,20 @@ type Entry struct {
 	IgnoreStepCount bool
 	StepCount       uint64
 
-	Starred bool
+	Starred    bool
+	PublishURL string
+	Music      *Music
 
-	Tags    []string
-	Weather *Weather
+	Tags     []string
+	Weather  *Weather
+	Location *Location
 
 	TimeZone     string
 	Creator      *Creator
 	CreationDate time.Time
 }
 
+// Creator is the creator of a journal entry.
 type Creator struct {
 	DeviceAgent    string
 	GenerationDate time.Time
@@ -34,42 +40,56 @@ type Creator struct {
 	SoftwareAgent  string
 }
 
+// Location of a journal entry.
 type Location struct {
 	AdministrativeArea string
 	Country            string
 	Locality           string
 	PlaceName          string
 	Region             *Region
+	FoursquareID       string
 
 	Coordinate
 }
 
+// Region location data.
 type Region struct {
 	Center *Coordinate
 	Radius float64
 }
 
+// Coordinate for location data.
 type Coordinate struct {
 	Latitude  float64
 	Longitude float64
 }
 
+// Weather data for a journal entry.
 type Weather struct {
 	Celsius          string
 	Fahrenheit       string
 	Description      string
 	IconName         string
-	PressureMB       int
-	RelativeHumidity int
+	PressureMB       float64
+	RelativeHumidity float64
 	Service          string
 	SunriseDate      time.Time
 	SunsetDate       time.Time
 	VisibilityKM     float64
-	WindBearing      int
-	WindChillCelsius int
-	WindSpeedKPH     int
+	WindBearing      uint64
+	WindChillCelsius int64
+	WindSpeedKPH     float64
 }
 
+// Music data for a journal entry.
+type Music struct {
+	Album     string
+	Artist    string
+	Track     string
+	AlbumYear string
+}
+
+// UUID gets the unique ID of the entry.
 func (e *Entry) UUID() string {
 	return e.uuid
 }
@@ -78,7 +98,7 @@ func newEntry() *Entry {
 	id := uuid.NewV4()
 
 	return &Entry{
-		uuid: uuid.Formatter(id, uuid.Clean), // e.g. FF755C6D7D9B4A5FBC4E41C07D622C65
+		uuid: strings.ToUpper(uuid.Formatter(id, uuid.Clean)), // e.g. FF755C6D7D9B4A5FBC4E41C07D622C65
 	}
 }
 
@@ -113,24 +133,55 @@ func (e *Entry) parse(r io.ReadSeeker) error {
 			e.Starred = v.(bool)
 		case "Step Count":
 			e.StepCount = v.(uint64)
+		case "Creation Date":
+			e.CreationDate = v.(time.Time)
 		case "Tags":
-			v2 := v.([]interface{})
-			e.Tags = e.Tags[:0]
-			for _, av := range v2 {
-				e.Tags = append(e.Tags, av.(string))
+			o, err := parseStringArray(v.([]interface{}))
+			if err != nil {
+				return err
 			}
+			e.Tags = o
 		case "Creator":
-			if e.Creator == nil {
-				e.Creator = &Creator{}
-			}
+			e.Creator = &Creator{}
 			err := e.Creator.parse(v.(map[string]interface{}))
 			if err != nil {
 				return err
 			}
+		case "Location":
+			e.Location = &Location{}
+			err := e.Location.parse(v.(map[string]interface{}))
+			if err != nil {
+				return err
+			}
+		case "Weather":
+			e.Weather = &Weather{}
+			err := e.Weather.parse(v.(map[string]interface{}))
+			if err != nil {
+				return err
+			}
+		case "Publish URL":
+			e.PublishURL = v.(string)
+		case "Music":
+			e.Music = &Music{}
+			err := e.Music.parse(v.(map[string]interface{}))
+			if err != nil {
+				return err
+			}
+		default:
+			return errors.New("unexpected key: " + k)
 		}
 	}
 
 	return nil
+}
+
+func parseStringArray(in []interface{}) ([]string, error) {
+	var out []string
+	for _, v := range in {
+		out = append(out, v.(string))
+	}
+
+	return out, nil
 }
 
 func (c *Creator) parse(dict map[string]interface{}) error {
@@ -138,8 +189,159 @@ func (c *Creator) parse(dict map[string]interface{}) error {
 		switch k {
 		case "Device Agent":
 			c.DeviceAgent = v.(string)
+		case "Generation Date":
+			c.GenerationDate = v.(time.Time)
+		case "Host Name":
+			c.HostName = v.(string)
+		case "OS Agent":
+			c.OSAgent = v.(string)
+		case "Software Agent":
+			c.SoftwareAgent = v.(string)
+		default:
+			return errors.New("unexpected key: " + k)
 		}
 	}
 
+	return nil
+}
+
+func (l *Location) parse(dict map[string]interface{}) error {
+	for k, v := range dict {
+		switch k {
+		case "Administrative Area":
+			l.AdministrativeArea = v.(string)
+		case "Country":
+			l.Country = v.(string)
+		case "Locality":
+			l.Locality = v.(string)
+		case "Place Name":
+			l.PlaceName = v.(string)
+		case "Latitude":
+			l.Latitude = v.(float64)
+		case "Longitude":
+			l.Longitude = v.(float64)
+		case "Foursquare ID":
+			l.FoursquareID = v.(string)
+		case "Region":
+			l.Region = &Region{}
+			err := l.Region.parse(v.(map[string]interface{}))
+			if err != nil {
+				return err
+			}
+		default:
+			return errors.New("unexpected key: " + k)
+		}
+	}
+	return nil
+}
+
+func (r *Region) parse(dict map[string]interface{}) error {
+	for k, v := range dict {
+		switch k {
+		case "Radius":
+			r.Radius = v.(float64)
+		case "Center":
+			r.Center = &Coordinate{}
+			err := r.Center.parse(v.(map[string]interface{}))
+			if err != nil {
+				return err
+			}
+		default:
+			return errors.New("unexpected key: " + k)
+		}
+	}
+	return nil
+}
+
+func (c *Coordinate) parse(dict map[string]interface{}) error {
+	for k, v := range dict {
+		switch k {
+		case "Latitude":
+			c.Latitude = v.(float64)
+		case "Longitude":
+			c.Longitude = v.(float64)
+		default:
+			return errors.New("unexpected key: " + k)
+		}
+	}
+	return nil
+}
+
+func (w *Weather) parse(dict map[string]interface{}) error {
+	for k, v := range dict {
+		switch k {
+		case "Celsius":
+			w.Celsius = v.(string)
+		case "Description":
+			w.Description = v.(string)
+		case "Fahrenheit":
+			w.Fahrenheit = v.(string)
+		case "IconName":
+			w.IconName = v.(string)
+		case "Pressure MB":
+			switch v.(type) {
+			case uint64:
+				w.PressureMB = float64(v.(uint64))
+			case float64:
+				w.PressureMB = v.(float64)
+			}
+		case "Relative Humidity":
+			switch v.(type) {
+			case float64:
+				w.RelativeHumidity = v.(float64)
+			case uint64:
+				w.RelativeHumidity = float64(v.(uint64))
+			}
+		case "Service":
+			w.Service = v.(string)
+		case "Sunrise Date":
+			w.SunriseDate = v.(time.Time)
+		case "Sunset Date":
+			w.SunsetDate = v.(time.Time)
+		case "Visibility KM":
+			switch v.(type) {
+			case float64:
+				w.VisibilityKM = v.(float64)
+			case uint64:
+				w.VisibilityKM = float64(v.(uint64))
+			}
+		case "Wind Bearing":
+			w.WindBearing = v.(uint64)
+		case "Wind Chill Celsius":
+			switch v.(type) {
+			case int64:
+				w.WindChillCelsius = v.(int64)
+			case uint64:
+				w.WindChillCelsius = int64(v.(uint64))
+			}
+		case "Wind Speed KPH":
+			switch v.(type) {
+			case uint64:
+				w.WindSpeedKPH = float64(v.(uint64))
+			case float64:
+				w.WindSpeedKPH = v.(float64)
+			}
+		default:
+			return errors.New("unexpected key: " + k)
+		}
+	}
+	return nil
+}
+
+func (m *Music) parse(dict map[string]interface{}) error {
+	for k, v := range dict {
+		switch k {
+		case "Album":
+			m.Album = v.(string)
+		case "Artist":
+			m.Artist = v.(string)
+		case "Track":
+			m.Track = v.(string)
+		case "Album Year":
+			m.AlbumYear = v.(string)
+		default:
+			return errors.New("unexpected key: " + k)
+		}
+	}
 	return nil
 }

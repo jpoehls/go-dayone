@@ -1,2 +1,3 @@
-// dayone is a package for reading Day One journal files.
+// Package dayone is for reading Day One (http://dayoneapp.com)
+// journal files.
 package dayone

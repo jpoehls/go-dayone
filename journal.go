@@ -10,12 +10,17 @@ import (
 
 const entryExt = ".doentry"
 
-var StopRead = errors.New("stop reading")
+// ErrStopRead is an error you can return from a
+// ReadFunc to stop reading journal entries.
+var ErrStopRead = errors.New("stop reading")
 
+// Journal is the top-level type for reading Day One journal files.
 type Journal struct {
 	dir string
 }
 
+// NewJournal creates a new Journal for the
+// specified dir.
 func NewJournal(dir string) *Journal {
 	return &Journal{
 		dir: dir,
@@ -45,6 +50,7 @@ func (j Journal) Write(e *Entry) error {
 }
 */
 
+// ReadEntry reads the entry with the specified id.
 func (j *Journal) ReadEntry(id string) (*Entry, error) {
 	path := filepath.Join(j.getEntriesDir(), id+entryExt)
 
@@ -64,11 +70,13 @@ func (j *Journal) ReadEntry(id string) (*Entry, error) {
 	return e, nil
 }
 
-// TODO: add ability to attach a JPEG photo
-// func (j Journal) WritePhoto(e Entry, path string)
-
+// ReadFunc is the func to use when enumerating journal entries.
 type ReadFunc func(e *Entry, err error) error
 
+// Read enumerates all of the journal entries and calls
+// fn with each entry found. Errors returned by fn
+// are returned by Read. fn can return StopError
+// to halt enumeration at any point.
 func (j *Journal) Read(fn ReadFunc) error {
 
 	var err error
@@ -88,13 +96,14 @@ func (j *Journal) Read(fn ReadFunc) error {
 			continue
 		}
 
-		e, err = j.ReadEntry(filepath.Base(f.Name()))
+		uuid := strings.TrimSuffix(filepath.Base(f.Name()), filepath.Ext(f.Name()))
+		e, err = j.ReadEntry(uuid)
 		err = fn(e, err)
 
-		if err == StopRead {
+		if err == ErrStopRead {
 			return nil
 		} else if err != nil {
-			return err
+			return errors.New(err.Error() + ": file: " + f.Name())
 		}
 	}
 
