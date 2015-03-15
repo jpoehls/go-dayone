@@ -2,7 +2,7 @@ package dayone
 
 import (
 	"errors"
-	//"github.com/juju/errgo"
+	"os"
 	"strings"
 	"testing"
 )
@@ -23,6 +23,90 @@ func TestReadingMyOwnJournal(t *testing.T) {
 
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestOpenMissingPhoto(t *testing.T) {
+	j := NewJournal("./test_journals/default")
+
+	r, err := j.OpenPhoto("bad uuid")
+	if !os.IsNotExist(err) {
+		t.Log(err)
+		t.Error("expected an os not exist error")
+	}
+
+	if r != nil {
+		r.Close()
+		t.Error("expected nil reader")
+	}
+}
+
+func TestOpenPhoto(t *testing.T) {
+	j := NewJournal("./test_journals/default")
+
+	r, err := j.OpenPhoto("871D0F435D7B469C9429CD441A9E74B5")
+	if err != nil {
+		t.Error(err)
+	}
+
+	if r == nil {
+		t.Error("expected reader not nil")
+	} else {
+		r.Close()
+	}
+}
+
+func TestStatPhoto(t *testing.T) {
+	j := NewJournal("./test_journals/default")
+
+	i, err := j.PhotoStat("871D0F435D7B469C9429CD441A9E74B5")
+	if err != nil {
+		t.Error(err)
+	}
+
+	if i == nil {
+		t.Error("file stat")
+	}
+}
+
+func TestStatEntry(t *testing.T) {
+	j := NewJournal("./test_journals/default")
+
+	i, err := j.EntryStat("871D0F435D7B469C9429CD441A9E74B5")
+	if err != nil {
+		t.Error(err)
+	}
+
+	if i == nil {
+		t.Error("file stat")
+	}
+}
+
+func TestStatMissingPhoto(t *testing.T) {
+	j := NewJournal("./test_journals/default")
+
+	i, err := j.PhotoStat("missing uuid")
+	if !os.IsNotExist(err) {
+		t.Log(err)
+		t.Error("expected an os not exist error")
+	}
+
+	if i != nil {
+		t.Error("expected nil file info")
+	}
+}
+
+func TestStatMissingEntry(t *testing.T) {
+	j := NewJournal("./test_journals/default")
+
+	i, err := j.EntryStat("missing uuid")
+	if !os.IsNotExist(err) {
+		t.Log(err)
+		t.Error("expected an os not exist error")
+	}
+
+	if i != nil {
+		t.Error("expected nil file info")
 	}
 }
 

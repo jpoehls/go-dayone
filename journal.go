@@ -3,6 +3,7 @@ package dayone
 import (
 	"errors"
 	"github.com/juju/errgo"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 )
 
 const entryExt = ".doentry"
+const photoExt = ".jpg"
 
 // ErrStopRead is an error you can return from a
 // ReadFunc to stop reading journal entries.
@@ -32,6 +34,10 @@ func (j *Journal) getEntriesDir() string {
 	return filepath.Join(j.dir, "entries")
 }
 
+func (j *Journal) getPhotosDir() string {
+	return filepath.Join(j.dir, "photos")
+}
+
 /*
 func (j Journal) Write(e *Entry) error {
 	if e.id == "" {
@@ -51,13 +57,68 @@ func (j Journal) Write(e *Entry) error {
 }
 */
 
-// ReadEntry reads the entry with the specified id.
-func (j *Journal) ReadEntry(id string) (*Entry, error) {
-	path := filepath.Join(j.getEntriesDir(), id+entryExt)
+// PhotoStat returns the result of os.Stat() for the
+// photo associated with the entry uuid.
+func (j *Journal) PhotoStat(uuid string) (os.FileInfo, error) {
+	path := filepath.Join(j.getPhotosDir(), uuid+photoExt)
+
+	f, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, err
+		} else {
+			return nil, errgo.Mask(err)
+		}
+	}
+
+	return f, nil
+}
+
+// OpenPhoto opens an io.ReadCloser for the photo file
+// associated with the specified entry uuid or returns an error.
+func (j *Journal) OpenPhoto(uuid string) (io.ReadCloser, error) {
+	path := filepath.Join(j.getPhotosDir(), uuid+photoExt)
 
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, errgo.Mask(err, os.IsNotExist)
+		if os.IsNotExist(err) {
+			return nil, err
+		} else {
+			return nil, errgo.Mask(err)
+		}
+	}
+
+	return f, nil
+}
+
+// EntryStat returns the result of os.Stat() for the
+// entry with the specified uuid.
+func (j *Journal) EntryStat(uuid string) (os.FileInfo, error) {
+	path := filepath.Join(j.getEntriesDir(), uuid+entryExt)
+
+	f, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, err
+		} else {
+			return nil, errgo.Mask(err)
+		}
+	}
+
+	return f, nil
+}
+
+// ReadEntry reads the entry with the specified id.
+func (j *Journal) ReadEntry(uuid string) (*Entry, error) {
+	path := filepath.Join(j.getEntriesDir(), uuid+entryExt)
+
+	f, err := os.Open(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, err
+		} else {
+			return nil, errgo.Mask(err)
+		}
 	}
 	defer f.Close()
 
@@ -85,7 +146,11 @@ func (j *Journal) Read(fn ReadFunc) error {
 
 	files, err := ioutil.ReadDir(j.getEntriesDir())
 	if err != nil {
-		return errgo.Mask(err)
+		if os.IsNotExist(err) {
+			return err
+		} else {
+			return errgo.Mask(err)
+		}
 	}
 
 	for _, f := range files {
