@@ -2,6 +2,7 @@ package dayone
 
 import (
 	"errors"
+	"github.com/juju/errgo"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -56,7 +57,7 @@ func (j *Journal) ReadEntry(id string) (*Entry, error) {
 
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return nil, errgo.Mask(err, os.IsNotExist)
 	}
 	defer f.Close()
 
@@ -84,7 +85,7 @@ func (j *Journal) Read(fn ReadFunc) error {
 
 	files, err := ioutil.ReadDir(j.getEntriesDir())
 	if err != nil {
-		return err
+		return errgo.Mask(err)
 	}
 
 	for _, f := range files {
@@ -103,7 +104,7 @@ func (j *Journal) Read(fn ReadFunc) error {
 		if err == ErrStopRead {
 			return nil
 		} else if err != nil {
-			return errors.New(err.Error() + ": file: " + f.Name())
+			return errgo.NoteMask(err, "file: "+f.Name())
 		}
 	}
 

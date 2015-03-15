@@ -2,6 +2,7 @@ package dayone
 
 import (
 	"errors"
+	//"github.com/juju/errgo"
 	"strings"
 	"testing"
 )
@@ -77,17 +78,18 @@ func TestReadBubblesError(t *testing.T) {
 
 	count := 0
 
+	myerr := errors.New("boom")
 	err := j.Read(func(e *Entry, err error) error {
 		count++
-		return errors.New("boom")
+		return myerr
 	})
 
 	if count != 1 {
 		t.Error("read func called too many times")
 	}
 
-	if !strings.HasPrefix(err.Error(), "boom: file:") {
-		t.Logf("error: %v", err)
+	t.Logf("error: %v", err)
+	if !strings.Contains(err.Error(), "boom") {
 		t.Error("didn't bubble error")
 	}
 }
