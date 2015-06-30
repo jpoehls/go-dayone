@@ -7,25 +7,6 @@ import (
 	"testing"
 )
 
-func TestReadingMyOwnJournal(t *testing.T) {
-	j := NewJournal("/Users/joshua/Dropbox/Apps/Day One/Journal.dayone")
-
-	count := 0
-	err := j.Read(func(e *Entry, err error) error {
-		if err != nil {
-			return err
-		}
-		count++
-		return nil
-	})
-
-	t.Logf("%v entries read", count)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestOpenMissingPhoto(t *testing.T) {
 	j := NewJournal("./test_journals/default")
 
