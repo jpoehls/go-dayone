@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewEntryHasUUID(t *testing.T) {
-	e := newEntry()
+	e := NewEntry()
 
 	if e.UUID() == "" {
 		t.Error("missing uuid")
@@ -33,7 +33,7 @@ func TestValidateMissingUUID(t *testing.T) {
 }
 
 func TestValidatePasses(t *testing.T) {
-	e := newEntry()
+	e := NewEntry()
 
 	err := e.validate()
 	if err != nil {

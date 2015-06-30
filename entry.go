@@ -94,7 +94,7 @@ func (e *Entry) UUID() string {
 	return e.uuid
 }
 
-func newEntry() *Entry {
+func NewEntry() *Entry {
 	id := uuid.NewV4()
 
 	return &Entry{
