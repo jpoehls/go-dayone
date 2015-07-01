@@ -223,3 +223,28 @@ func TestReadingEmptyEntriesDir(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestWriteEntryWithNoId(t *testing.T) { // dup with EntryNoId test?
+	j := NewJournal("./test_journals/default")
+
+	e := &Entry{}
+
+	err := j.Write(e)
+
+	if err == nil || err.Error() != "missing uuid" {
+		t.Fail()
+	}
+}
+
+func TestWriteOverwriteExisting(t *testing.T) {
+	j := NewJournal("./test_journals/default")
+
+	e := new(Entry)
+	e.uuid = "871D0F435D7B469C9429CD441A9E74B5"
+
+	err := j.Write(e)
+
+	if err == nil || err.Error() != "overwriting existing entry is not supported yet" {
+		t.Fail()
+	}
+}

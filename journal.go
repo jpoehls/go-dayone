@@ -2,6 +2,7 @@ package dayone
 
 import (
 	"errors"
+	"fmt"
 	"github.com/juju/errgo"
 	"io"
 	"io/ioutil"
@@ -38,24 +39,29 @@ func (j *Journal) getPhotosDir() string {
 	return filepath.Join(j.dir, "photos")
 }
 
-/*
+// Write creates a new entry
 func (j Journal) Write(e *Entry) error {
-	if e.id == "" {
-		// TODO: Add support for writing new entries.
-		//       - Ensure unique on FS (probably by just not allowing overwrite file on write)
-		//       - Write to file
-		return errors.New("cannot write new entries: not supported yet")
-	}
+	//TODO: add overwrite existing journal entry
+	//TODO: add photo support
 
 	if err := e.validate(); err != nil {
 		return err
 	}
 
-	// TODO: Overwrite file in journal
+	// stat file on, for now err if file exists
+	path := filepath.Join(j.getEntriesDir(), e.UUID()+entryExt)
+	f, err := os.Stat(path)
+
+	if !os.IsNotExist(err) {
+		return errors.New("overwriting existing entry is not supported yet")
+	} else {
+		return errors.New("something else f: " + fmt.Sprintf("%v", f))
+	}
+
+	// write new entry created
 
 	return nil
 }
-*/
 
 // PhotoStat returns the result of os.Stat() for the
 // photo associated with the entry uuid.
