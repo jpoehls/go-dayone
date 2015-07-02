@@ -248,3 +248,17 @@ func TestWriteOverwriteExisting(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestWriteEntryNotImplementedYet(t *testing.T) {
+	j := NewJournal("./test_journals/default")
+
+	e := NewEntry()
+	e.EntryText = "hello\nworld"
+	e.Tags = []string{"hello", "world"}
+
+	err := j.Write(e)
+
+	if err == nil || err.Error() != "writing journal entries not implemented yet!" {
+		t.Fail()
+	}
+}

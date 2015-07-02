@@ -2,7 +2,6 @@ package dayone
 
 import (
 	"errors"
-	"fmt"
 	"github.com/juju/errgo"
 	"io"
 	"io/ioutil"
@@ -50,17 +49,15 @@ func (j Journal) Write(e *Entry) error {
 
 	// stat file on, for now err if file exists
 	path := filepath.Join(j.getEntriesDir(), e.UUID()+entryExt)
-	f, err := os.Stat(path)
+	_, err := os.Stat(path)
 
 	if !os.IsNotExist(err) {
 		return errors.New("overwriting existing entry is not supported yet")
-	} else {
-		return errors.New("something else f: " + fmt.Sprintf("%v", f))
 	}
 
 	// write new entry created
-
-	return nil
+	return errors.New("writing journal entries not implemented yet!")
+	// return nil
 }
 
 // PhotoStat returns the result of os.Stat() for the
