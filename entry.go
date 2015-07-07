@@ -12,40 +12,40 @@ import (
 // Entry is the top-level journal entry type.
 type Entry struct {
 	uuid      string
-	EntryText string
+	EntryText string `plist:"Entry Text"`
 
 	Activity        string
-	IgnoreStepCount bool
-	StepCount       uint64
+	IgnoreStepCount bool   `plist:"Ignore Step Count"`
+	StepCount       uint64 `plist:"Step Count"`
 
 	Starred    bool
-	PublishURL string
+	PublishURL string `plist:"Publish URL"`
 	Music      *Music
 
 	Tags     []string
 	Weather  *Weather
 	Location *Location
 
-	TimeZone     string
+	TimeZone     string `plist:"Time Zone"`
 	Creator      *Creator
-	CreationDate time.Time
+	CreationDate time.Time `plist:"Creation Date"`
 }
 
 // Creator is the creator of a journal entry.
 type Creator struct {
-	DeviceAgent    string
-	GenerationDate time.Time
-	HostName       string
-	OSAgent        string
-	SoftwareAgent  string
+	DeviceAgent    string    `plist:"Device Agent"`
+	GenerationDate time.Time `plist:"Generation Date"`
+	HostName       string    `plist:Host Name"`
+	OSAgent        string    `plist:OS Agent"`
+	SoftwareAgent  string    `plist: Software Agent"`
 }
 
 // Location of a journal entry.
 type Location struct {
-	AdministrativeArea string
+	AdministrativeArea string `plist:"Adminstrative Area"`
 	Country            string
 	Locality           string
-	PlaceName          string
+	PlaceName          string `plist:"Place Name"`
 	Region             *Region
 	FoursquareID       string
 
@@ -70,15 +70,15 @@ type Weather struct {
 	Fahrenheit       string
 	Description      string
 	IconName         string
-	PressureMB       float64
-	RelativeHumidity float64
+	PressureMB       float64 `plist:"Pressure MB"`
+	RelativeHumidity float64 `plist:"Relative Humidity"`
 	Service          string
-	SunriseDate      time.Time
-	SunsetDate       time.Time
-	VisibilityKM     float64
-	WindBearing      uint64
-	WindChillCelsius int64
-	WindSpeedKPH     float64
+	SunriseDate      time.Time `plist:"Sunrise Date"`
+	SunsetDate       time.Time `plist:"Sunset Date"`
+	VisibilityKM     float64   `plist:"Visibility KM"`
+	WindBearing      uint64    `plist:"Wind Bearing"`
+	WindChillCelsius int64     `plist:"Wind Chill Celsius"`
+	WindSpeedKPH     float64   `plist:"Wind Speed KPH"`
 }
 
 // Music data for a journal entry.
@@ -86,7 +86,7 @@ type Music struct {
 	Album     string
 	Artist    string
 	Track     string
-	AlbumYear string
+	AlbumYear string `plist:"Album Year"`
 }
 
 // UUID gets the unique ID of the entry.

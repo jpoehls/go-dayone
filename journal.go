@@ -1,7 +1,9 @@
 package dayone
 
 import (
+	"bytes"
 	"errors"
+	"github.com/DHowett/go-plist"
 	"github.com/juju/errgo"
 	"io"
 	"io/ioutil"
@@ -55,9 +57,32 @@ func (j Journal) Write(e *Entry) error {
 		return errors.New("overwriting existing entry is not supported yet")
 	}
 
+	// convert entry into stream
+	buf := &bytes.Buffer{}
+
+	enc := plist.NewEncoder(buf)
+	enc.Indent("        ") // weird indentation on dict key
+
+	if err := enc.Encode(e); err != nil {
+		return err
+	}
+
+	f, err := os.Create("./" + path)
+	if err != nil {
+		return errgo.Mask(err)
+	}
+
+	defer f.Close()
+
+	_, err = f.Write(buf.Bytes())
+	if err != nil {
+		return errors.New("Failed to write entry!")
+	}
+
+	f.Sync()
+
 	// write new entry created
-	return errors.New("writing journal entries not implemented yet!")
-	// return nil
+	return nil
 }
 
 // PhotoStat returns the result of os.Stat() for the

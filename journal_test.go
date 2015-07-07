@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestOpenMissingPhoto(t *testing.T) {
@@ -249,16 +250,19 @@ func TestWriteOverwriteExisting(t *testing.T) {
 	}
 }
 
-func TestWriteEntryNotImplementedYet(t *testing.T) {
-	j := NewJournal("./test_journals/default")
+func TestWriteEntry(t *testing.T) {
+	j := NewJournal("./test_journals/write")
 
 	e := NewEntry()
 	e.EntryText = "hello\nworld"
 	e.Tags = []string{"hello", "world"}
+	e.CreationDate = time.Now()
 
 	err := j.Write(e)
 
-	if err == nil || err.Error() != "writing journal entries not implemented yet!" {
-		t.Fail()
+	if err != nil {
+		t.Fatal(err)
 	}
+
+	// do we need to verify we wrote the file?
 }
